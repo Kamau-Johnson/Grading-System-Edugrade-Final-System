@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>EduGrade | Teacher Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='teacher_dashboard.css') }}" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div class="message-box" id="messageBox"></div>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <i class="logo-icon fas fa-graduation-cap"></i>
+                    <div class="logo-text"><h1>EDUGRADE +</h1><p>Track. Grade. Grow.</p></div>
+                </div>
+            </div>
+            <nav class="sidebar-content">
+                <div class="nav-items">
+                    <a href="#" class="nav-item active" onclick="showSection('dashboard')" data-section="dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+                    <div class="management-label">Management</div>
+                    <a href="#" class="nav-item" onclick="showSection('all_students')" data-section="all_students"><i class="fas fa-users"></i><span>All Students</span></a>
+                    <a href="#" class="nav-item" onclick="showSection('marks_entry')" data-section="marks_entry"><i class="fas fa-book-open-reader"></i><span>Marks Entry</span></a>
+                    <a href="#" class="nav-item" onclick="showSection('generate_report')" data-section="generate_report"><i class="fas fa-chart-bar"></i><span>Generate Report</span></a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info"><i class="fas fa-user-circle"></i><span>User: Teacher</span></div>
+                <div class="logout-link"><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></div>
+            </div>
+        </aside>
+                
+        <main class="main-content">
+            <div class="content-wrapper">
+                <div id="dashboard" class="content-section active">
+                    <div class="welcome-card"><h1>Welcome, Teacher</h1><p>Track, Grade, and Foster Student Growth.</p></div>
+                    <div class="info-cards">
+                        <div class="info-card"><h3>TOTAL STUDENTS</h3><div class="number-box" id="totalStudentsCount">{{ total_students }}</div><p>Students currently enrolled</p></div>
+                        <div class="info-card"><h3>TOTAL SUBJECTS</h3><div class="number-box">10</div><p>Subjects in curriculum</p></div>
+                    </div>
+                </div>
+                                
+                <div id="all_students" class="content-section">
+                    <div id="student-list-container">
+                        <div class="content-header"><h2><i class="fas fa-users"></i> All Students</h2><p>View, add, and manage all students in the system.</p></div>
+                        <div class="data-container">
+                            <div class="table-controls">
+                                <div class="search-container"><input type="text" id="studentSearch" placeholder="Search by name or admission no..." class="search-input"><i class="fas fa-search search-icon"></i></div>
+                                <button class="btn btn-primary" onclick="showAddStudentForm()"><i class="fas fa-user-plus"></i> Add New Student</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead><tr><th>Student Name</th><th>Admission No.</th><th>Gender</th><th>Class</th><th>Actions</th></tr></thead>
+                                    <tbody id="allStudentsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="add-student-view" style="display: none;">
+                        <div class="content-header"><h2><i class="fas fa-user-plus"></i> Add New Student</h2><p>Fill in the details for the new student.</p></div>
+                        <div class="data-container">
+                            <form id="addStudentForm">
+                                <div class="form-grid">
+                                    <div class="form-group"><label for="studname">Full Name *</label><input type="text" id="studname" name="studname" required></div>
+                                    <div class="form-group"><label for="admno">Admission Number *</label><input type="text" id="admno" name="admno" required></div>
+                                    <div class="form-group"><label for="gender">Gender *</label><select id="gender" name="gender" required><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                                    <div class="form-group"><label for="dob">Date of Birth *</label><input type="date" id="dob" name="dob" required></div>
+                                    <div class="form-group">
+                                        <label for="classID">Assign to Grade *</label>
+                                        <select id="classID" name="class" required>
+                                            <option value="" disabled selected>Select a grade</option>
+                                            <option value="grade 1A">Grade 1A</option>
+                                            <option value="grade 1B">Grade 1B</option>
+                                            <option value="grade 2A">Grade 2A</option>
+                                            <option value="grade 2B">Grade 2B</option>
+                                            <option value="grade 3A">Grade 3A</option>
+                                            <option value="grade 3B">Grade 3B</option>
+                                            <option value="grade 4A">Grade 4A</option>
+                                            <option value="grade 4B">Grade 4B</option>
+                                            <option value="grade 5A">Grade 5A</option>
+                                            <option value="grade 5B">Grade 5B</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="hideAddStudentForm()">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Add Student</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                                
+                <div id="marks_entry" class="content-section">
+                    <div id="marks-list-view">
+                        <div class="content-header"><h2><i class="fas fa-book-open-reader"></i> Marks Entry</h2><p>Select a student to enter or update their marks for all subjects.</p></div>
+                        <div class="data-container">
+                            <div class="table-controls">
+                                <div class="form-group" style="min-width: 200px;">
+                                    <label for="termSelector" style="font-weight: bold; margin-right: 10px;">Select Term:</label>
+                                    <select id="termSelector" class="search-input">
+                                        <option value="Term 1" selected>Term 1</option>
+                                        <option value="Term 2">Term 2</option>
+                                        <option value="Term 3">Term 3</option>
+                                    </select>
+                                </div>
+                                <div class="search-container"><input type="text" id="marksSearch" placeholder="Search students..." class="search-input"><i class="fas fa-search search-icon"></i></div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead><tr><th>Student Name</th><th>Adm No.</th><th>Class</th><th>Mean Score</th><th>Grade</th><th>Remark</th><th>Actions</th></tr></thead>
+                                    <tbody id="marksTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                                        
+                    <div id="marks-entry-view" style="display: none;">
+                        <div class="content-header">
+                            <h2 id="marksStudentName"></h2>
+                            <p id="marksStudentDetails"></p>
+                        </div>
+                        <div class="data-container">
+                            <form id="marksEntryForm">
+                                <input type="hidden" id="marksEntryStudentId" name="studID">
+                                <input type="hidden" id="marksEntryTerm" name="term">
+                                                                
+                                <div class="student-info-card">
+                                    <h3><i class="fas fa-user-graduate"></i> Student Information</h3>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <span class="info-label">Full Name</span>
+                                            <span class="info-value" id="studentInfoName">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Admission No.</span>
+                                            <span class="info-value" id="studentInfoAdmno">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Class</span>
+                                            <span class="info-value" id="studentInfoClass">-</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Term</span>
+                                            <span class="info-value" id="studentInfoTerm">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="subjectsContainer" class="subjects-container"></div>
+                                <div class="overall-summary">
+                                    <h3><i class="fas fa-chart-line"></i> Overall Performance Summary</h3>
+                                    <div class="summary-stats">
+                                        <div class="summary-stat">
+                                            <div class="stat-value" id="overallTotal">0.0</div>
+                                            <div class="stat-label">Total Marks</div>
+                                        </div>
+                                        <div class="summary-stat">
+                                            <div class="stat-value" id="overallAverage">0.0</div>
+                                            <div class="stat-label">Average (%)</div>
+                                        </div>
+                                        <div class="summary-stat">
+                                            <div class="stat-value" id="overallGrade">-</div>
+                                            <div class="stat-label">Overall Grade</div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="teacherRemark">Teacher's Remark</label>
+                                        <textarea id="teacherRemark" name="remark" rows="3" placeholder="Enter your remarks about the student's performance..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="showMarksListView()">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="saveMarksBtn"><i class="fas fa-save"></i> Save All Marks</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                                
+                <div id="generate_report" class="content-section">
+                    <div class="content-header"><h2><i class="fas fa-chart-bar"></i> Generate Report</h2><p>Create and view end-of-term reports for students.</p></div>
+                    <div class="data-container">
+                        <div class="table-controls">
+                            <div class="form-group"><label for="reportTermSelector">Select Term:</label><select id="reportTermSelector" class="search-input"><option value="Term 1">Term 1</option><option value="Term 2">Term 2</option><option value="Term 3">Term 3</option></select></div>
+                            <div class="form-group"><label for="reportStudentSelector">Select Student:</label><select id="reportStudentSelector" class="search-input" required><option value="">-- Select --</option></select></div>
+                            <div class="form-actions" style="border:none; padding:0; align-self:flex-end;"><button id="generateReportBtn" class="btn btn-primary" disabled><i class="fas fa-cogs"></i> Generate</button><button id="downloadPdfBtn" class="btn btn-success" style="display:none;"><i class="fas fa-file-pdf"></i> PDF</button></div>
+                        </div>
+                        <div id="reportCardContainer"><div class="placeholder-text"><i class="fas fa-file-invoice"></i><p>Select a term and student to generate a report.</p></div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+const SUBJECTS = [
+    {id: 'mathematics', name: 'Mathematics', icon: 'fa-calculator', code: 101},
+    {id: 'english', name: 'English', icon: 'fa-book', code: 102},
+    {id: 'kiswahili', name: 'Kiswahili', icon: 'fa-language', code: 103},
+    {id: 'environmental', name: 'Environmental Activities', icon: 'fa-leaf', code: 104},
+    {id: 'creative_arts', name: 'Creative Arts', icon: 'fa-palette', code: 105},
+    {id: 'physical_ed', name: 'Physical Education', icon: 'fa-running', code: 106},
+    {id: 'religious_ed', name: 'Religious Education', icon: 'fa-pray', code: 107},
+    {id: 'social_studies', name: 'Social Studies', icon: 'fa-globe-africa', code: 108},
+    {id: 'science_tech', name: 'Science and Technology', icon: 'fa-flask', code: 109},
+    {id: 'life_skills', name: 'Life Skills', icon: 'fa-lightbulb', code: 110}
+];
+
+const ASSESSMENT_TYPES = [
+    {id: 'assignment1', name: 'Assignment 1', maxScore: 10, icon: 'fa-pencil-alt'},
+    {id: 'assignment2', name: 'Assignment 2', maxScore: 10, icon: 'fa-pencil-alt'},
+    {id: 'cat1', name: 'CAT 1', maxScore: 15, icon: 'fa-clipboard-check'},
+    {id: 'cat2', name: 'CAT 2', maxScore: 15, icon: 'fa-clipboard-check'},
+    {id: 'final_exam', name: 'Final Exam', maxScore: 100, icon: 'fa-graduation-cap'}
+];
+
+// Frontend storage for detailed marks
+let detailedMarksStorage = {};
+
+// Load detailed marks from localStorage on page load
+function loadDetailedMarksFromStorage() {
+    const stored = localStorage.getItem('edugrade_detailed_marks');
+    if (stored) {
+        try {
+            detailedMarksStorage = JSON.parse(stored);
+        } catch (e) {
+            detailedMarksStorage = {};
+        }
+    }
+}
+
+// Save detailed marks to localStorage
+function saveDetailedMarksToStorage() {
+    localStorage.setItem('edugrade_detailed_marks', JSON.stringify(detailedMarksStorage));
+}
+
+// Get storage key for student and term
+function getStorageKey(studentId, term) {
+    return `${studentId}_${term}`;
+}
+
+// Store detailed marks for a student and term
+function storeDetailedMarks(studentId, term, marksData) {
+    const key = getStorageKey(studentId, term);
+    detailedMarksStorage[key] = marksData;
+    saveDetailedMarksToStorage();
+}
+
+// Retrieve detailed marks for a student and term
+function getDetailedMarks(studentId, term) {
+    const key = getStorageKey(studentId, term);
+    return detailedMarksStorage[key] || null;
+}
+
+async function updateDashboardData() {
+    try {
+        const response = await fetch('/api/dashboard_data');
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('totalStudentsCount').textContent = data.total_students;
+        }
+    } catch (e) {
+        console.error("Could not update dashboard data:", e);
+    }
+}
+
+function showSection(id){
+    const actions={
+        'dashboard': updateDashboardData,
+        'all_students':()=>{hideAddStudentForm();fetchAndRenderAllStudents()},
+        'marks_entry':()=>showMarksListView(),
+        'generate_report':()=>populateStudentDropdownsForReport()
+    };
+    document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    document.querySelector(`.nav-item[data-section="${id}"]`).classList.add('active');
+    if(actions[id])actions[id]();
+}
+    
+function showMessageBox(msg,type='success'){
+    const b=document.getElementById('messageBox');
+    b.innerHTML=`<i class="fas ${type==='success'?'fa-check-circle':'fa-times-circle'}"></i> ${msg}`;
+    b.className=`message-box show ${type}`;
+    setTimeout(()=>{b.className='message-box'},4000);
+}
+
+let allStudentsData = []; 
+
+function showAddStudentForm(){
+    document.getElementById('student-list-container').style.display='none';
+    document.getElementById('add-student-view').style.display='block';
+}
+    
+function hideAddStudentForm(){
+    document.getElementById('student-list-container').style.display='block';
+    document.getElementById('add-student-view').style.display='none';
+    document.getElementById('addStudentForm').reset();
+}
+
+function renderStudentsTable(studentsToRender) {
+    const t = document.getElementById('allStudentsTableBody');
+    t.innerHTML = '';
+            
+    if (studentsToRender && studentsToRender.length > 0) {
+        studentsToRender.forEach(s => {
+            t.innerHTML += `<tr><td>${s.studname}</td><td>${s.admno}</td><td>${s.gender}</td><td>${s.class}</td><td><button class="btn btn-danger" onclick="deleteStudent(${s.studID})"><i class="fas fa-trash"></i></button></td></tr>`;
+        });
+    } else {
+        t.innerHTML = `<tr><td colspan="5" align="center">No students found matching your criteria.</td></tr>`;
+    }
+}
+
+async function fetchAndRenderAllStudents(){
+    const t = document.getElementById('allStudentsTableBody');
+    t.innerHTML = `<tr><td colspan="5" align="center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+    try {
+        const r = await fetch('/api/get_students');
+        const d = await r.json();
+        if (d.success) {
+            allStudentsData = d.students || [];
+            renderStudentsTable(allStudentsData);
+        } else {
+            t.innerHTML = `<tr><td colspan="5" align="center" style="color:red;">Error loading students.</td></tr>`;
+        }
+    } catch(e) {
+        t.innerHTML = `<tr><td colspan="5" align="center" style="color:red;">An error occurred.</td></tr>`;
+    }
+}
+
+document.getElementById('studentSearch').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const filteredStudents = allStudentsData.filter(student => {
+        const nameMatch = student.studname.toLowerCase().includes(searchTerm);
+        const admnoMatch = student.admno.toLowerCase().includes(searchTerm);
+        return nameMatch || admnoMatch;
+    });
+    renderStudentsTable(filteredStudents);
+});
+
+document.getElementById('addStudentForm').addEventListener('submit',async function(e){
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target).entries());
+    try {
+        const r=await fetch('/api/add_student',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+        const j=await r.json();
+        showMessageBox(j.message,j.success?'success':'error');
+        if(j.success){
+            hideAddStudentForm();
+            fetchAndRenderAllStudents();
+            updateDashboardData();
+        }
+    } catch(e) {
+        showMessageBox('An unexpected error occurred while adding the student.','error');
+    }
+});
+    
+async function deleteStudent(id) {
+    if (!confirm('Are you sure you want to delete this student? This will also delete all their marks.')) return;
+    
+    // Also remove from local storage
+    Object.keys(detailedMarksStorage).forEach(key => {
+        if (key.startsWith(`${id}_`)) {
+            delete detailedMarksStorage[key];
+        }
+    });
+    saveDetailedMarksToStorage();
+    
+    try {
+        const r = await fetch(`/api/delete_student/${id}`, { method: 'DELETE' });
+        const j = await r.json();
+        showMessageBox(j.message, j.success ? 'success' : 'error');
+        if (j.success) {
+            fetchAndRenderAllStudents();
+            updateDashboardData();
+        }
+    } catch (e) {
+        showMessageBox('An error occurred during deletion.', 'error');
+    }
+}
+
+function showMarksListView(){
+    document.getElementById('marks-list-view').style.display='block';
+    document.getElementById('marks-entry-view').style.display='none';
+    fetchAndRenderMarksTable();
+}
+
+async function fetchAndRenderMarksTable(){
+    const t=document.getElementById('marksTableBody');
+    const selectedTerm = document.getElementById('termSelector').value;
+    t.innerHTML=`<tr><td colspan="7" align="center"><i class="fas fa-spinner fa-spin"></i> Loading students for ${selectedTerm}...</td></tr>`;
+    try{
+        const r=await fetch(`/api/get_marks_list?term=${encodeURIComponent(selectedTerm)}`);
+        const d=await r.json();
+        t.innerHTML='';
+        if(d.success&&d.marks.length>0){
+            d.marks.forEach(m=>{
+                // Check if we have detailed marks in local storage
+                const detailedMarks = getDetailedMarks(m.studID, selectedTerm);
+                let displayScore = m.meanscore;
+                
+                // If we have detailed marks, calculate the real average
+                if (detailedMarks) {
+                    const calculatedAverage = calculateOverallAverageFromDetailed(detailedMarks);
+                    displayScore = calculatedAverage;
+                }
+                
+                const grade = getGradeFromScore(displayScore);
+                const gradeClass = grade.toLowerCase();
+                t.innerHTML+=`<tr>
+                    <td>${m.studname}</td>
+                    <td>${m.admno}</td>
+                    <td>${m.class}</td>
+                    <td>${displayScore ? displayScore.toFixed(1) : 'N/A'}</td>
+                    <td><span class="grade-badge grade-${gradeClass}">${grade}</span></td>
+                    <td>${m.remark||'N/A'}</td>
+                    <td><button class="btn btn-primary" onclick="openMarksEntryForStudent(${m.studID},'${m.studname}','${m.admno}','${m.class}')"><i class="fas fa-edit"></i> Enter Marks</button></td>
+                </tr>`;
+            });
+        } else {
+            t.innerHTML=`<tr><td colspan="7" align="center">No students to mark for ${selectedTerm}.</td></tr>`;
+        }
+    } catch(e) {
+        t.innerHTML=`<tr><td colspan="7" align="center" style="color:red;">Error loading data.</td></tr>`;
+    }
+}
+
+function calculateOverallAverageFromDetailed(detailedMarks) {
+    let totalRaw = 0;
+    let subjectsWithMarks = 0;
+    
+    // Calculate total possible marks for ALL subjects
+    const totalPossibleForAllSubjects = SUBJECTS.length * ASSESSMENT_TYPES.reduce((sum, assessment) => sum + assessment.maxScore, 0);
+    
+    SUBJECTS.forEach(subject => {
+        let subjectHasMarks = false;
+        
+        if (detailedMarks.subjects && detailedMarks.subjects[subject.id]) {
+            const subjectData = detailedMarks.subjects[subject.id];
+            if (subjectData.assessments) {
+                ASSESSMENT_TYPES.forEach(assessment => {
+                    const score = subjectData.assessments[assessment.id];
+                    if (score !== null && score !== undefined && score !== '') {
+                        totalRaw += parseFloat(score);
+                        subjectHasMarks = true;
+                    }
+                });
+            }
+        }
+        
+        if (subjectHasMarks) {
+            subjectsWithMarks++;
+        }
+    });
+    
+    // Return average based on ALL subjects, not just completed ones
+    return totalPossibleForAllSubjects > 0 ? (totalRaw / totalPossibleForAllSubjects) * 100 : 0;
+}
+
+async function openMarksEntryForStudent(id, name, admno, studentClass){
+    document.getElementById('marks-list-view').style.display='none';
+    document.getElementById('marks-entry-view').style.display='block';
+            
+    const selectedTerm = document.getElementById('termSelector').value;
+            
+    document.getElementById('marksEntryStudentId').value = id;
+    document.getElementById('marksEntryTerm').value = selectedTerm;
+    document.getElementById('marksStudentName').textContent = `Enter Marks for: ${name}`;
+    document.getElementById('marksStudentDetails').textContent = `${selectedTerm} - All Subjects Assessment`;
+            
+    document.getElementById('studentInfoName').textContent = name;
+    document.getElementById('studentInfoAdmno').textContent = admno;
+    document.getElementById('studentInfoClass').textContent = studentClass;
+    document.getElementById('studentInfoTerm').textContent = selectedTerm;
+            
+    generateSubjectCards();
+            
+    // Load existing marks from local storage first
+    const localMarks = getDetailedMarks(id, selectedTerm);
+    if (localMarks) {
+        loadExistingMarks(localMarks);
+        document.getElementById('teacherRemark').value = localMarks.remark || '';
+    } else {
+        // Try to load from backend as fallback
+        try{
+            const r = await fetch(`/api/get_detailed_marks/${id}?term=${encodeURIComponent(selectedTerm)}`);
+            const d = await r.json();
+            if(d.success && d.remark){
+                document.getElementById('teacherRemark').value = d.remark || '';
+            } else {
+                document.getElementById('teacherRemark').value = '';
+            }
+        } catch(e) {
+            console.error("Could not fetch existing remarks:", e);
+            document.getElementById('teacherRemark').value = '';
+        }
+    }
+            
+    calculateAllSummaries();
+}
+
+function generateSubjectCards() {
+    const container = document.getElementById('subjectsContainer');
+    container.innerHTML = '';
+            
+    SUBJECTS.forEach(subject => {
+        const subjectCard = document.createElement('div');
+        subjectCard.className = 'subject-card';
+        subjectCard.innerHTML = `
+            <div class="subject-header">
+                <div class="subject-title">
+                    <i class="fas ${subject.icon}"></i>
+                    <span>${subject.name}</span>
+                </div>
+                <div class="subject-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Total</span>
+                        <span class="summary-value" id="${subject.id}_total">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Average</span>
+                        <span class="summary-value" id="${subject.id}_average">0.0%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Grade</span>
+                        <span class="summary-value" id="${subject.id}_grade">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="assessments-grid">
+                ${ASSESSMENT_TYPES.map(assessment => `
+                    <div class="assessment-group">
+                        <label for="${subject.id}_${assessment.id}">
+                            <i class="fas ${assessment.icon}"></i>
+                            ${assessment.name} (/${assessment.maxScore})
+                        </label>
+                        <input
+                             type="number"
+                             id="${subject.id}_${assessment.id}"
+                             name="${subject.id}_${assessment.id}"
+                            min="0"
+                             max="${assessment.maxScore}"
+                             step="0.5"
+                            placeholder="0-${assessment.maxScore}"
+                            oninput="validateAndCalculate('${subject.id}', '${assessment.id}')"
+                        >
+                        <span class="error-message" id="${subject.id}_${assessment.id}_error"></span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        container.appendChild(subjectCard);
+    });
+}
+
+function loadExistingMarks(marksDetails) {
+    if (!marksDetails || !marksDetails.subjects) return;
+            
+    SUBJECTS.forEach(subject => {
+        if (marksDetails.subjects[subject.id] && marksDetails.subjects[subject.id].assessments) {
+            const subjectData = marksDetails.subjects[subject.id];
+            ASSESSMENT_TYPES.forEach(assessment => {
+                const input = document.getElementById(`${subject.id}_${assessment.id}`);
+                if (input && subjectData.assessments[assessment.id] !== null && subjectData.assessments[assessment.id] !== undefined && subjectData.assessments[assessment.id] !== '') {
+                    input.value = subjectData.assessments[assessment.id];
+                }
+            });
+        }
+    });
+    
+    // Recalculate summaries after loading
+    calculateAllSummaries();
+}
+
+function validateAndCalculate(subjectId, assessmentId) {
+    const assessment = ASSESSMENT_TYPES.find(a => a.id === assessmentId);
+    if (!assessment) return;
+            
+    const input = document.getElementById(`${subjectId}_${assessmentId}`);
+    const errorSpan = document.getElementById(`${subjectId}_${assessmentId}_error`);
+    const value = parseFloat(input.value);
+            
+    input.classList.remove('error');
+    errorSpan.textContent = '';
+            
+    if (input.value !== '' && (isNaN(value) || value < 0 || value > assessment.maxScore)) {
+        input.classList.add('error');
+        errorSpan.textContent = `Must be between 0-${assessment.maxScore}`;
+        return;
+    }
+            
+    calculateSubjectSummary(subjectId);
+    calculateOverallSummary();
+}
+
+function calculateSubjectSummary(subjectId) {
+    let totalRawMarks = 0;
+    let totalPossibleMarks = 0;
+            
+    ASSESSMENT_TYPES.forEach(assessment => {
+        const input = document.getElementById(`${subjectId}_${assessment.id}`);
+        if (input && input.value !== '' && !input.classList.contains('error')) {
+            totalRawMarks += parseFloat(input.value);
+            totalPossibleMarks += assessment.maxScore;
+        }
+    });
+            
+    const averagePercent = totalPossibleMarks > 0 ? (totalRawMarks / totalPossibleMarks) * 100 : 0;
+    const grade = getGradeFromScore(averagePercent);
+            
+    document.getElementById(`${subjectId}_total`).textContent = totalRawMarks.toFixed(1);
+    document.getElementById(`${subjectId}_average`).textContent = averagePercent.toFixed(1) + '%';
+    document.getElementById(`${subjectId}_grade`).textContent = grade;
+}
+
+function calculateOverallSummary() {
+    let grandTotalRaw = 0;
+    let grandTotalPossible = 0;
+    let subjectsWithMarks = 0;
+    
+    // Calculate total possible marks across ALL subjects (not just those with marks)
+    const totalPossibleForAllSubjects = SUBJECTS.length * ASSESSMENT_TYPES.reduce((sum, assessment) => sum + assessment.maxScore, 0);
+    
+    SUBJECTS.forEach(subject => {
+        let subjectTotal = 0;
+        let subjectHasMarks = false;
+        
+        ASSESSMENT_TYPES.forEach(assessment => {
+            const input = document.getElementById(`${subject.id}_${assessment.id}`);
+            if (input && input.value !== '' && !input.classList.contains('error')) {
+                subjectTotal += parseFloat(input.value);
+                subjectHasMarks = true;
+            }
+        });
+        
+        if (subjectHasMarks) {
+            grandTotalRaw += subjectTotal;
+            subjectsWithMarks++;
+        }
+        
+        // Always add to possible marks for subjects that have been attempted
+        if (subjectHasMarks) {
+            grandTotalPossible += ASSESSMENT_TYPES.reduce((sum, assessment) => sum + assessment.maxScore, 0);
+        }
+    });
+    
+    // Calculate overall average based on ALL subjects in curriculum
+    // If a student hasn't done a subject, it counts as 0 towards the overall average
+    const overallAverage = totalPossibleForAllSubjects > 0 ? (grandTotalRaw / totalPossibleForAllSubjects) * 100 : 0;
+    const overallGrade = getGradeFromScore(overallAverage);
+    
+    // Display information about completion
+    const completionInfo = `${subjectsWithMarks}/${SUBJECTS.length} subjects completed`;
+    
+    document.getElementById('overallTotal').textContent = grandTotalRaw.toFixed(1);
+    document.getElementById('overallAverage').textContent = overallAverage.toFixed(1) + '%';
+    document.getElementById('overallGrade').textContent = overallGrade;
+    
+    // Add completion info to the summary
+    const summaryContainer = document.querySelector('.summary-stats');
+    let completionElement = document.getElementById('completionInfo');
+    if (!completionElement) {
+        completionElement = document.createElement('div');
+        completionElement.id = 'completionInfo';
+        completionElement.className = 'summary-stat';
+        completionElement.innerHTML = `
+            <div class="stat-value" id="completionValue">${completionInfo}</div>
+            <div class="stat-label">Subjects Status</div>
+        `;
+        summaryContainer.appendChild(completionElement);
+    } else {
+        document.getElementById('completionValue').textContent = completionInfo;
+    }
+}
+
+function calculateAllSummaries() {
+    SUBJECTS.forEach(subject => calculateSubjectSummary(subject.id));
+    calculateOverallSummary();
+}
+
+function getGradeFromScore(score) {
+    if (score >= 80) return 'A';
+    if (score >= 70) return 'B';
+    if (score >= 60) return 'C';
+    if (score >= 50) return 'D';
+    return 'E';
+}
+
+document.getElementById('marksEntryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+            
+    if (document.querySelector('.assessment-group .error')) {
+        showMessageBox('Please correct the errors in the marks before saving.', 'error');
+        return;
+    }
+            
+    const submitButton = document.getElementById('saveMarksBtn');
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+    const studentId = parseInt(document.getElementById('marksEntryStudentId').value);
+    const term = document.getElementById('marksEntryTerm').value;
+    const remark = document.getElementById('teacherRemark').value;
+            
+    // Collect detailed marks data
+    const detailedMarksData = {
+        studID: studentId,
+        term: term,
+        remark: remark,
+        subjects: {}
+    };
+            
+    let totalRawMarks = 0;
+    let totalPossibleMarks = 0;
+            
+    // In the marksEntryForm submit handler, replace the calculation part:
+    SUBJECTS.forEach(subject => {
+        detailedMarksData.subjects[subject.id] = {
+            name: subject.name,
+            code: subject.code,
+            assessments: {}
+        };
+                    
+        let subjectTotal = 0;
+        let subjectPossible = 0;
+        let subjectHasMarks = false;
+                    
+        ASSESSMENT_TYPES.forEach(assessment => {
+            const input = document.getElementById(`${subject.id}_${assessment.id}`);
+            const value = input && input.value !== '' ? parseFloat(input.value) : null;
+            detailedMarksData.subjects[subject.id].assessments[assessment.id] = value;
+                            
+            if (value !== null) {
+                subjectTotal += value;
+                subjectHasMarks = true;
+            }
+            // Always count towards possible marks for this subject if any assessment is done
+            if (subjectHasMarks) {
+                subjectPossible += assessment.maxScore;
+            }
+        });
+                    
+        // Only add to grand totals if subject has marks
+        if (subjectHasMarks) {
+            totalRawMarks += subjectTotal;
+            totalPossibleMarks += ASSESSMENT_TYPES.reduce((sum, assessment) => sum + assessment.maxScore, 0);
+        }
+                    
+        detailedMarksData.subjects[subject.id].total = subjectTotal;
+        detailedMarksData.subjects[subject.id].average = subjectPossible > 0 ? (subjectTotal / subjectPossible) * 100 : 0;
+        detailedMarksData.subjects[subject.id].grade = getGradeFromScore(detailedMarksData.subjects[subject.id].average);
+    });
+
+    // Calculate overall average based on ALL subjects in curriculum
+    const totalPossibleForAllSubjects = SUBJECTS.length * ASSESSMENT_TYPES.reduce((sum, assessment) => sum + assessment.maxScore, 0);
+    detailedMarksData.ovrscore = totalRawMarks;
+    detailedMarksData.meanscore = totalPossibleForAllSubjects > 0 ? (totalRawMarks / totalPossibleForAllSubjects) * 100 : 0;
+            
+    // Store detailed marks in local storage
+    storeDetailedMarks(studentId, term, detailedMarksData);
+            
+    // Prepare data for backend (simplified format)
+    const backendData = {
+        studID: studentId,
+        term: term,
+        remark: remark,
+        ovrscore: totalRawMarks,
+        meanscore: totalPossibleMarks > 0 ? (totalRawMarks / totalPossibleMarks) * 100 : 0
+    };
+            
+    try {
+        const response = await fetch('/api/save_detailed_marks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(backendData)
+        });
+        const result = await response.json();
+        showMessageBox(result.message, result.success ? 'success' : 'error');
+        
+        // Don't go back to list view, stay in edit mode
+        if (result.success) {
+            showMessageBox('Marks saved successfully! You can continue editing or go back to the list.', 'success');
+        }
+    } catch(e) {
+        showMessageBox('An error occurred while saving marks.', 'error');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-save"></i> Save All Marks';
+    }
+});
+
+document.getElementById('termSelector').addEventListener('change', fetchAndRenderMarksTable);
+
+document.getElementById('marksSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.getElementById('marksTableBody').getElementsByTagName('tr');
+    for (const row of rows) {
+        row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+    }
+});
+
+async function populateStudentDropdownsForReport(){
+    const s=document.getElementById('reportStudentSelector');
+    s.innerHTML='<option value="">Loading...</option>';
+    try{
+        const r=await fetch('/api/get_students');
+        const d=await r.json();
+        s.innerHTML='<option value="">-- Select a student --</option>';
+        if(d.success&&d.students.length>0){
+            d.students.forEach(st=>{s.innerHTML+=`<option value="${st.studID}">${st.studname} (${st.admno})</option>`});
+        }
+    } catch(e) {
+        s.innerHTML='<option value="">Error loading students</option>';
+    }
+}
+
+document.getElementById('reportStudentSelector').addEventListener('change',e=>{
+    document.getElementById('generateReportBtn').disabled=!e.target.value;
+    document.getElementById('downloadPdfBtn').style.display='none';
+});
+
+document.getElementById('generateReportBtn').addEventListener('click',async()=>{
+    const id=parseInt(document.getElementById('reportStudentSelector').value);
+    const term=document.getElementById('reportTermSelector').value;
+    if(!id)return;
+            
+    const c=document.getElementById('reportCardContainer');
+    c.innerHTML=`<div class="placeholder-text"><i class="fas fa-spinner fa-spin"></i> Generating...</div>`;
+    
+    try{
+        // Get student basic info from backend
+        const studentsResponse = await fetch('/api/get_students');
+        const studentsData = await studentsResponse.json();
+        
+        if (!studentsData.success) {
+            throw new Error('Could not fetch student data');
+        }
+        
+        const student = studentsData.students.find(s => s.studID === id);
+        if (!student) {
+            throw new Error('Student not found');
+        }
+        
+        // Get detailed marks from local storage
+        const detailedMarks = getDetailedMarks(id, term);
+        
+        // Get remark from backend
+        let remark = '';
+        try {
+            const remarksResponse = await fetch(`/api/get_detailed_marks/${id}?term=${encodeURIComponent(term)}`);
+            const remarksData = await remarksResponse.json();
+            if (remarksData.success && remarksData.remark) {
+                remark = remarksData.remark;
+            }
+        } catch (e) {
+            console.log('Could not fetch remark from backend');
+        }
+        
+        // If we have detailed marks from local storage, use them
+        if (detailedMarks) {
+            const reportData = {
+                studname: student.studname,
+                admno: student.admno,
+                class: student.class,
+                term: term,
+                subjects: detailedMarks.subjects,
+                ovrscore: 0,
+                meanscore: 0,
+                remark: detailedMarks.remark || remark
+            };
+            
+            // Calculate totals from detailed marks
+            let totalRaw = 0;
+            let totalPossible = 0;
+            
+            Object.values(detailedMarks.subjects).forEach(subjectData => {
+                if (subjectData.assessments) {
+                    Object.entries(subjectData.assessments).forEach(([assessmentId, score]) => {
+                        if (score !== null && score !== undefined && score !== '') {
+                            const assessment = ASSESSMENT_TYPES.find(a => a.id === assessmentId);
+                            if (assessment) {
+                                totalRaw += parseFloat(score);
+                                totalPossible += assessment.maxScore;
+                            }
+                        }
+                    });
+                }
+            });
+            
+            reportData.ovrscore = totalRaw;
+            reportData.meanscore = totalPossible > 0 ? (totalRaw / totalPossible) * 100 : 0;
+            
+            renderDetailedReportCard(reportData, c);
+            document.getElementById('downloadPdfBtn').style.display='inline-flex';
+        } else {
+            // No detailed marks found, show basic info
+            c.innerHTML=`<div class="placeholder-text"><i class="fas fa-exclamation-circle"></i> No detailed marks found for ${student.studname} in ${term}. Please enter marks first.</div>`;
+            document.getElementById('downloadPdfBtn').style.display='none';
+        }
+        
+    } catch(e) {
+        c.innerHTML=`<div class="placeholder-text" style="color:red;">Error generating report: ${e.message}</div>`;
+        document.getElementById('downloadPdfBtn').style.display='none';
+    }
+});
+
+function renderDetailedReportCard(data, container) {
+    let subjectRows = '';
+    if (data.subjects) {
+        Object.values(data.subjects).forEach(subjectData => {
+            subjectRows += `
+                <tr>
+                    <td>${subjectData.name || 'Unknown Subject'}</td>
+                    <td>${subjectData.assessments.assignment1 !== null && subjectData.assessments.assignment1 !== undefined && subjectData.assessments.assignment1 !== '' ? subjectData.assessments.assignment1 : '-'}</td>
+                    <td>${subjectData.assessments.assignment2 !== null && subjectData.assessments.assignment2 !== undefined && subjectData.assessments.assignment2 !== '' ? subjectData.assessments.assignment2 : '-'}</td>
+                    <td>${subjectData.assessments.cat1 !== null && subjectData.assessments.cat1 !== undefined && subjectData.assessments.cat1 !== '' ? subjectData.assessments.cat1 : '-'}</td>
+                    <td>${subjectData.assessments.cat2 !== null && subjectData.assessments.cat2 !== undefined && subjectData.assessments.cat2 !== '' ? subjectData.assessments.cat2 : '-'}</td>
+                    <td>${subjectData.assessments.final_exam !== null && subjectData.assessments.final_exam !== undefined && subjectData.assessments.final_exam !== '' ? subjectData.assessments.final_exam : '-'}</td>
+                    <td><strong>${subjectData.total !== undefined ? subjectData.total.toFixed(1) : 'N/A'}</strong></td>
+                    <td>${subjectData.average !== undefined ? subjectData.average.toFixed(1) + '%' : 'N/A'}</td>
+                    <td><span class="grade-badge grade-${(subjectData.grade || 'e').toLowerCase()}">${subjectData.grade || 'E'}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    const overallGrade = getGradeFromScore(data.meanscore);
+            
+    container.innerHTML = `
+        <div id="printableReport" class="detailed-report-card">
+            <header class="report-header">
+                <div class="school-info">
+                    <h1>EDUGRADE+ SCHOOL</h1>
+                    <p>STUDENT PROGRESS REPORT</p>
+                    <p>${data.term || 'Term Result'} - ${new Date().getFullYear()}</p>
+                </div>
+            </header>
+                            
+            <section class="student-info-section">
+                <div class="student-detail"><strong>Student Name:</strong> ${data.studname}</div>
+                <div class="student-detail"><strong>Admission No:</strong> ${data.admno}</div>
+                <div class="student-detail"><strong>Class:</strong> ${data.class}</div>
+                <div class="student-detail"><strong>Term:</strong> ${data.term || 'Term Result'}</div>
+            </section>
+                            
+            <section class="marks-section">
+                <h3>Subject Performance</h3>
+                <div class="table-responsive">
+                    <table class="marks-table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Asgn 1<br>(10)</th>
+                                <th>Asgn 2<br>(10)</th>
+                                <th>CAT 1<br>(15)</th>
+                                <th>CAT 2<br>(15)</th>
+                                <th>Exam<br>(100)</th>
+                                <th>Total</th>
+                                <th>Average</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${subjectRows}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+                            
+            <section class="summary-section">
+                <h3>Overall Performance Summary</h3>
+                <div class="performance-summary">
+                    <div class="summary-item">
+                        <div class="summary-label">Total Marks</div>
+                        <div class="summary-value">${data.ovrscore !== undefined ? data.ovrscore.toFixed(1) : '0'}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Overall Average</div>
+                        <div class="summary-value">${data.meanscore !== undefined ? data.meanscore.toFixed(1) + '%' : '0.0%'}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Overall Grade</div>
+                        <div class="summary-value grade-${overallGrade.toLowerCase()}">${overallGrade}</div>
+                    </div>
+                </div>
+                                    
+                <div class="teacher-remark">
+                    <h4>Class Teacher's Remark:</h4>
+                    <p>${data.remark || 'No remarks provided.'}</p>
+                </div>
+            </section>
+                            
+            <footer class="report-footer">
+                <div class="signature-section">
+                    <div class="signature">
+                        <p>_________________________</p>
+                        <p><strong>Class Teacher</strong></p>
+                    </div>
+                    <div class="signature">
+                        <p>_________________________</p>
+                        <p><strong>Principal</strong></p>
+                    </div>
+                </div>
+                <div class="report-date">
+                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                </div>
+            </footer>
+        </div>
+    `;
+}
+
+document.getElementById('downloadPdfBtn').addEventListener('click',()=>{
+    const reportElement=document.getElementById('printableReport');
+    const studentName = reportElement.querySelector('.student-detail').textContent.replace('Student Name:','').trim();
+    const term = document.getElementById('reportTermSelector').value;
+    const filename=`${studentName.replace(/ /g, '_')}_${term}_Report.pdf`;
+            
+    html2pdf().from(reportElement).set({
+        filename: filename,
+        margin: 0.25,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    }).save();
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded',()=>{
+    loadDetailedMarksFromStorage();
+    showSection('dashboard');
+});
+</script>
+</body>
+</html>
